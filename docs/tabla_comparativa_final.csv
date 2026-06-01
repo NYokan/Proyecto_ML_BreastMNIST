@@ -1,0 +1,5 @@
+Modelo / Resolución,Test Accuracy,Test AUC,Test Recall,Tiempo (min)
+MobileNetV2 (Baseline) - 28x28,0.7308,0.7214,1.0,0.27
+EfficientNetB0 - 128x128,0.7308,0.6629,1.0,0.39
+ViT Personalizado - 28x28,0.7308,0.498,1.0,0.25
+ViT Personalizado - 128x128,0.7308,0.5512,1.0,0.61
