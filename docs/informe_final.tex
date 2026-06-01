@@ -26,9 +26,10 @@
     
     \begin{flushright}
         \textbf{Integrantes:}\\
-        Matías Eduardo Muñoz Parraguirre\\
-        Ignacio Duarte\\
-        Cristóbal Flores\\[1cm]
+        Matías Muñoz P\\
+        Cristóbal Flores Villegas\\
+        Francisco Morales Díaz\\
+        Benjamín Peña Díaz\\[1cm]
         \textbf{Profesor:}\\
         Billy \\[1cm]
         \textbf{Fecha:}\\
@@ -41,7 +42,7 @@
 
 % --- RESUMEN ---
 \begin{abstract}
-Este informe técnico detalla el desarrollo y evaluación de sistemas avanzados de aprendizaje de máquinas aplicados al dataset BreastMNIST (clasificación binaria de ultrasonido de mama). Se contrasta el rendimiento de arquitecturas convolucionales clásicas (MobileNetV2 y EfficientNetB0) frente a un Vision Transformer (ViT) adaptado, analizando el impacto de la resolución espacial ($28\times28$ vs. $128\times128$ píxeles). Los resultados evidencian los desafíos del desbalance de clases y la relación entre la complejidad arquitectónica y el volumen de datos disponible.
+Este informe técnico detalla el desarrollo y evaluación de sistemas avanzados de aprendizaje de máquinas aplicados al dataset BreastMNIST (clasificación binaria de ultrasonido de mama). Se contrasta el rendimiento de arquitecturas convolucionales clásicas (MobileNetV2 y EfficientNetB0) frente a un Vision Transformer (ViT) adaptado, analizando el impacto de la resolución espacial (\times28$ vs. \times128$ píxeles). Los resultados evidencian los desafíos del desbalance de clases y la relación entre la complejidad arquitectónica y el volumen de datos disponible.
 \end{abstract}
 
 % --- SECCIÓN 1: INTRODUCCIÓN ---
@@ -62,13 +63,13 @@ El uso de aprendizaje profundo en ultrasonido médico ha evolucionado significat
 % --- SECCIÓN 3: METODOLOGÍA ---
 \section{Metodología}
 \subsection{Diseño Experimental y Preprocesamiento}
-Se aplicó una división hold-out (train, val, test) utilizando la plataforma MedMNIST. Se establecieron dos tuberías de datos para procesar imágenes en resoluciones de $28\times28$ y reescaladas a $128\times128$ píxeles. Se incorporó \textit{Data Augmentation} y mecanismos de \textit{Early Stopping} para mitigar el sobreajuste.
+Se aplicó una división hold-out (train, val, test) utilizando la plataforma MedMNIST. Se establecieron dos tuberías de datos para procesar imágenes en resoluciones de \times28$ y reescaladas a \times128$ píxeles. Se incorporó \textit{Data Augmentation} y mecanismos de \textit{Early Stopping} para mitigar el sobreajuste.
 
 \subsection{Arquitecturas Evaluadas}
 Se implementaron y compararon las siguientes arquitecturas mediante técnicas de \textit{Transfer Learning} y ajuste fino:
 \begin{itemize}
-    \item \textbf{MobileNetV2 (Baseline):} Evaluado en $28\times28$.
-    \item \textbf{EfficientNetB0:} Evaluado en $128\times128$.
+    \item \textbf{MobileNetV2 (Baseline):} Evaluado en \times28$.
+    \item \textbf{EfficientNetB0:} Evaluado en \times128$.
     \item \textbf{Vision Transformer (ViT):} Arquitectura nativa desarrollada con capas \textit{PatchExtract} adaptables para evaluar ambas resoluciones.
 \end{itemize}
 
@@ -77,16 +78,16 @@ Se implementaron y compararon las siguientes arquitecturas mediante técnicas de
 La evaluación arrojó hallazgos fundamentales sobre el comportamiento de los sesgos inductivos frente a conjuntos de datos médicos reducidos:
 
 \begin{enumerate}
-    \item \textbf{Dominio del Baseline frente a la Complejidad:} MobileNetV2 en resolución nativa ($28\times28$) obtuvo el mejor AUC ($0.7214$). Esto demuestra que para un dataset de tamaño limitado y baja resolución espacial, la inserción de arquitecturas más profundas o el aumento artificial de la resolución puede introducir ruido, dificultando la generalización.
+    \item \textbf{Dominio del Baseline frente a la Complejidad:} MobileNetV2 en resolución nativa (\times28$) obtuvo el mejor AUC (.7214$). Esto demuestra que para un dataset de tamaño limitado y baja resolución espacial, la inserción de arquitecturas más profundas o el aumento artificial de la resolución puede introducir ruido, dificultando la generalización.
     
-    \item \textbf{El Fenómeno del Desbalance (Trampa del Recall):} Todos los modelos alcanzaron un Recall de $1.0$, acompañado de un Accuracy cercano al $0.7308$. Un análisis exhaustivo revela que esta métrica coincide exactamente con la proporción de la clase mayoritaria (Benigno) en el conjunto de prueba. El modelo colapsó hacia la predicción de la clase mayoritaria, haciendo imperativa la observación del AUC y demostrando que la exactitud aislada es engañosa en medicina.
+    \item \textbf{El Fenómeno del Desbalance (Trampa del Recall):} Todos los modelos alcanzaron un Recall de .0$, acompañado de un Accuracy cercano al .7308$. Un análisis exhaustivo revela que esta métrica coincide exactamente con la proporción de la clase mayoritaria (Benigno) en el conjunto de prueba. El modelo colapsó hacia la predicción de la clase mayoritaria, haciendo imperativa la observación del AUC y demostrando que la exactitud aislada es engañosa en medicina.
     
-    \item \textbf{Limitaciones del Vision Transformer (ViT):} El ViT en $128\times128$ superó a su variante de $28\times28$ en AUC. Esto es coherente con su arquitectura: los mecanismos de auto-atención carecen del sesgo inductivo espacial de las CNNs y requieren de una división en parches más rica para encontrar relaciones globales. Sin embargo, su desempeño general se mantuvo por debajo de las CNNs, confirmando que los Transformers requieren un volumen de datos sustancialmente mayor para superar a las redes convolucionales clásicas.
+    \item \textbf{Limitaciones del Vision Transformer (ViT):} El ViT en \times128$ superó a su variante de \times28$ en AUC. Esto es coherente con su arquitectura: los mecanismos de auto-atención carecen del sesgo inductivo espacial de las CNNs y requieren de una división en parches más rica para encontrar relaciones globales. Sin embargo, su desempeño general se mantuvo por debajo de las CNNs, confirmando que los Transformers requieren un volumen de datos sustancialmente mayor para superar a las redes convolucionales clásicas.
 \end{enumerate}
 
 % --- SECCIÓN 5: USO DE LLMS (REQUISITO OBLIGATORIO) ---
 \section{Declaración sobre el Uso de Modelos de Lenguaje}
-Durante la estructuración del \textit{pipeline} de datos y la codificación en TensorFlow, se utilizaron asistentes basados en IA (LLMs). Si bien estas herramientas aceleraron la configuración inicial de los entrenamientos y el diseño orientado a objetos, presentaron una desventaja crítica: alucinaron repetidamente proponiendo dimensiones erróneas en los tensores al interactuar con la resolución anómala de $28\times28$ píxeles de MedMNIST. Los modelos comerciales sugeridos fallaban internamente en sus capas de \textit{Pooling} o división de parches. Para corregir manualmente estos fallos, el equipo debió programar desde cero las capas \textit{PatchExtract} y \textit{PatchEmbedding} del Vision Transformer, adaptando matemáticamente el cálculo de dimensiones al tamaño exacto de la entrada.
+Durante la estructuración del \textit{pipeline} de datos y la codificación en TensorFlow, se utilizaron asistentes basados en IA (LLMs). Si bien estas herramientas aceleraron la configuración inicial de los entrenamientos y el diseño orientado a objetos, presentaron una desventaja crítica: alucinaron repetidamente proponiendo dimensiones erróneas en los tensores al interactuar con la resolución anómala de \times28$ píxeles de MedMNIST. Los modelos comerciales sugeridos fallaban internamente en sus capas de \textit{Pooling} o división de parches. Para corregir manualmente estos fallos, el equipo debió programar desde cero las capas \textit{PatchExtract} y \textit{PatchEmbedding} del Vision Transformer, adaptando matemáticamente el cálculo de dimensiones al tamaño exacto de la entrada.
 
 % --- BIBLIOGRAFÍA ---
 \newpage
