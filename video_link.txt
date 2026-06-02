@@ -1,0 +1,6 @@
+Link video explicativo:
+
+
+
+Integrantes: Cristobal Flores Villegas, Francisco Morales Diaz, Matias Munoz Parraguirre, Benjamin Pena Diaz
+Dataset: BreastMNIST (Dataset 3)
