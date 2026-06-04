@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guion — BreastMNIST · UNAB 2026</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Georgia, "Times New Roman", serif;
+    background: #f5f4f0;
+    color: #1a1a1a;
+    padding: 40px 20px 80px;
+  }
+  .container { max-width: 860px; margin: 0 auto; }
+
+  /* Header */
+  .doc-header {
+    text-align: center;
+    margin-bottom: 48px;
+    padding-bottom: 28px;
+    border-bottom: 2px solid #ccc;
+  }
+  .doc-header h1 { font-size: 26px; font-weight: bold; margin-bottom: 6px; }
+  .doc-header p  { font-size: 14px; color: #555; margin-top: 4px; }
+
+  /* Leyenda */
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 10px;
+    margin-bottom: 40px;
+    padding: 16px 20px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+  }
+  .legend h3 { width: 100%; font-size: 12px; text-transform: uppercase; letter-spacing: .1em; color: #888; margin-bottom: 6px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 5px 12px; border-radius: 20px;
+    font-family: sans-serif; font-size: 13px; font-weight: 600;
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+  /* Speaker colors */
+  .c1  { background: #dbeafe; color: #1e3a8a; }  /* Cristóbal — blue */
+  .c1-dot { background: #2563eb; }
+  .c2  { background: #d1fae5; color: #065f46; }  /* Francisco — green */
+  .c2-dot { background: #059669; }
+  .c3  { background: #fef3c7; color: #78350f; }  /* Matías — amber */
+  .c3-dot { background: #d97706; }
+  .c4  { background: #fce7f3; color: #831843; }  /* Benjamín — pink */
+  .c4-dot { background: #db2777; }
+
+  /* Slide block */
+  .slide-block {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    margin-bottom: 28px;
+    overflow: hidden;
+    page-break-inside: avoid;
+  }
+  .slide-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid #eee;
+  }
+  .slide-num {
+    font-family: "Courier New", monospace;
+    font-size: 12px; font-weight: bold; letter-spacing: .1em;
+    color: #888; text-transform: uppercase;
+  }
+  .slide-title { font-size: 18px; font-weight: bold; flex: 1; padding: 0 16px; }
+  .speaker-tag {
+    font-family: sans-serif; font-size: 12px; font-weight: 700;
+    padding: 4px 12px; border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  /* Script body */
+  .script {
+    padding: 20px 24px;
+    font-size: 16px;
+    line-height: 1.75;
+    color: #222;
+    border-left: 4px solid transparent;
+  }
+  .script.s1 { border-left-color: #2563eb; }
+  .script.s2 { border-left-color: #059669; }
+  .script.s3 { border-left-color: #d97706; }
+  .script.s4 { border-left-color: #db2777; }
+
+  /* Emphasis inside script */
+  .script strong { font-weight: bold; }
+  .script em     { font-style: italic; color: #555; }
+
+  /* Cue notes */
+  .cue {
+    font-family: sans-serif;
+    font-size: 12px; color: #888;
+    background: #f9f9f7;
+    border-top: 1px dashed #ddd;
+    padding: 8px 24px;
+  }
+  .cue span { font-weight: 600; color: #bbb; margin-right: 6px; }
+
+  /* Print */
+  @media print {
+    body { background: #fff; padding: 20px; }
+    .slide-block { box-shadow: none; border: 1px solid #ccc; margin-bottom: 20px; }
+    .legend { border: 1px solid #ccc; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="doc-header">
+    <h1>Guion de Presentación</h1>
+    <p>BreastMNIST — Diagnóstico Asistido de Cáncer de Mama mediante Visión Artificial</p>
+    <p>Prof. Billy Mark Peralta Márquez &nbsp;·&nbsp; Aprendizaje de Máquina &nbsp;·&nbsp; UNAB Junio 2026</p>
+  </div>
+
+  <!-- Leyenda de colores -->
+  <div class="legend">
+    <h3>Integrantes</h3>
+    <div class="chip c1"><span class="dot c1-dot"></span>Cristóbal Flores Villegas</div>
+    <div class="chip c2"><span class="dot c2-dot"></span>Francisco Morales Díaz</div>
+    <div class="chip c3"><span class="dot c3-dot"></span>Matías Muñoz Parraguirre</div>
+    <div class="chip c4"><span class="dot c4-dot"></span>Benjamín Peña Díaz</div>
+  </div>
+
+
+  <!-- ─────────────────────────────── -->
+  <!-- SLIDE 1 — PORTADA              -->
+  <!-- ─────────────────────────────── -->
+  <div class="slide-block">
+    <div class="slide-header">
+      <div class="slide-num">Diap. 01</div>
+      <div class="slide-title">Portada</div>
+      <div class="speaker-tag c1">Cristóbal Flores</div>
+    </div>
+    <div class="script s1">
+      Buenos días. Somos un equipo de cuatro estudiantes de Aprendizaje de Máquina de la Universidad Andrés Bello, y hoy les presentamos nuestro proyecto titulado <strong>"Diagnóstico Asistido de Cáncer de Mama mediante Visión Artificial"</strong>.
+      <br><br>
+      El trabajo se centra en el dataset <strong>BreastMNIST</strong>, donde comparamos arquitecturas de redes neuronales convolucionales clásicas contra Vision Transformers para clasificar imágenes de ultrasonido mamario.
+      <br><br>
+      Somos Cristóbal Flores, Francisco Morales, Matías Muñoz y Benjamín Peña. A lo largo de la presentación, cada uno cubrirá una parte del trabajo. Comencemos.
+    </div>
+    <div class="cue"><span>⏱ Tiempo estimado:</span> 30 segundos</div>
+  </div>
+
+
+  <!-- SLIDE 2 — AGENDA -->
+  <div class="slide-block">
+    <div class="slide-header">
+      <div class="slide-num">Diap. 02</div>
+      <div class="slide-title">Agenda / Contenido</div>
+      <div class="speaker-tag c1">Cristóbal Flores</div>
+    </div>
+    <div class="script s1">
+      La presentación está organizada en ocho secciones. Comenzaremos con el <strong>contexto clínico</strong> que motiva este trabajo, y luego revisaré el dataset y el análisis exploratorio.
+      <br><br>
+      Después Francisco explicará el <strong>diseño experimental y las arquitecturas</strong> implementadas. Matías cubrirá el <strong>proceso de entrenamiento</strong>. Y finalmente Benjamín presentará los <strong>resultados y las conclusiones</strong>.
+      <br><br>
+      Sin más preámbulo, comencemos por el contexto.
+    </div>
+    <div class="cue"><span>⏱ Tiempo estimado:</span> 25 segundos &nbsp;·&nbsp; <span>👉 Acción:</span> señalar cada sección del índice al mencionarla</div>
+  </div>
+
+
+  <!-- SLIDE 3 — CONTEXTO CLÍNICO -->
+  <div class="slide-block">
+    <div class="slide-header">
+      <div class="slide-num">Diap. 03</div>
+      <div class="slide-title">Contexto Clínico</div>
+      <div class="speaker-tag c1">Cristóbal Flores</div>
+    </div>
+    <div class="script s1">
+      El cáncer de mama es la neoplasia más frecuente en mujeres a nivel mundial. La buena noticia es que cuando se detecta en estadios tempranos, la tasa de supervivencia supera el 90%. El problema es que el diagnóstico por ultrasonido es altamente dependiente del operador: dos radiólogos pueden llegar a conclusiones distintas ante la misma imagen.
+      <br><br>
+      Aquí es donde los sistemas de <strong>diagnóstico asistido por computador</strong>, o CAD, entran en juego. Permiten estandarizar y escalar el proceso diagnóstico, reduciendo la variabilidad humana.
+      <br><br>
+      El objetivo específico de nuestro estudio es comparar <strong>CNN clásicas contra Vision Transformers</strong> en este contexto, evaluando además el impacto de la resolución de entrada de la imagen: 28×28 píxeles versus 128×128 píxeles.
+    </div>
+    <div class="cue"><span>⏱ Tiempo estimado:</span> 50 segundos &nbsp;·&nbsp; <span>🔄 Pasa el turno a:</span> Francisco Morales</div>
+  </div>
+
+
+  <!-- SLIDE 4 — DATASET -->
+  <div class="slide-block">
+    <div class="slide-header">
+      <div class="slide-num">Diap. 04</div>
+      <div class="slide-title">Dataset BreastMNIST</div>
+      <div class="speaker-tag c2">Francisco Morales</div>
+    </div>
+    <div class="script s2">
+      El dataset que utilizamos es <strong>BreastMNIST</strong>, parte del benchmark MedMNIST v2, publicado por Yang et al. en 2023. Consiste en imágenes de ultrasonido mamario en escala de grises, normalizadas y reescaladas a una resolución estándar de <strong>28 por 28 píxeles</strong>.
+      <br><br>
+      Como pueden ver en la distribución del gráfico, el dataset está desbalanceado: el <strong>73% de las imágenes corresponden a la clase benigna</strong>, y solo el 27% a la clase maligna. Esta proporción refleja la prevalencia clínica real, pero representa un desafío importante para el entrenamiento.
+      <br><br>
+      La partición de los datos —546 de entrenamiento, 78 de validación y 156 de prueba— es <strong>fija y provista por MedMNIST</strong>, lo que garantiza comparabilidad directa con la literatura existente.
+    </div>
+    <div class="cue"><span>⏱ Tiempo estimado:</span> 50 segundos</div>
+  </div>
+
+
+  <!-- SLIDE 5 — EDA -->
+  <div class="slide-block">
+    <div class="slide-header">
+      <div class="slide-num">Diap. 05</div>
+      <div class="slide-title">Análisis Exploratorio (EDA)</div>
+      <div class="speaker-tag c2">Francisco Morales</div>
+    </div>
+    <div class="script s2">
+      Del análisis exploratorio identificamos tres desafíos principales.
+      <br><br>
+      Primero, la <strong>modalidad de imagen</strong>: el ultrasonido presenta ruido de speckle, bajo contraste inter-tejido y artefactos de shadowing. Son desafíos propios de la ecografía que dificultan incluso la interpretación humana.
+      <br><br>
+      Segundo, la <strong>resolución de 28×28 píxeles es extremadamente baja</strong> — estamos hablando de 784 píxeles por imagen. Eso limita severamente la información espacial disponible para cualquier modelo. Expandir artificialmente esta resolución no agrega información diagnóstica real.
+      <br><br>
+      Tercero, el <strong>desbalance de clases</strong> nos obliga a priorizar el AUC-ROC como métrica. Si un modelo simplemente predice "benigno" para todas las muestras, obtiene automáticamente un 73% de accuracy — lo que hace que esa métrica sea completamente engañosa en este contexto.
+    </div>
+    <div class="cue"><span>⏱ Tiempo estimado:</span> 55 segundos</div>
+  </div>
+
+
+  <!-- SLIDE 6 — DISEÑO EXPERIMENTAL -->
+  <div class="slide-block">
+    <div class="slide-header">
+      <div class="slide-num">Diap. 06</div>
+      <div class="slide-title">Diseño Experimental</div>
+      <div class="speaker-tag c2">Francisco Morales</div>
+    </div>
+    <div class="script s2">
+      Para el diseño experimental adoptamos la <strong>división hold-out fija de MedMNIST</strong>: 546 imágenes de entrenamiento, 78 de validación y 156 de prueba final. Esta partición es el estándar del benchmark y nos permite comparar directamente con otros trabajos publicados.
+      <br><br>
+      Definimos cuatro métricas de evaluación: el <strong>AUC-ROC como métrica principal</strong>, dado el desbalance de clases; el accuracy como referencia contextual; el recall para medir la sensibilidad del modelo a la clase maligna; y el tiempo de entrenamiento como indicador de eficiencia computacional.
+      <br><br>
+      Es importante destacar que el AUC-ROC captura la capacidad discriminativa del modelo de forma independiente al umbral de clasificación, lo que lo hace robusto frente al desbalance.
+    </div>
+    <div class="cue"><span>⏱ Tiempo estimado:</span> 50 segundos &nbsp;·&nbsp; <span>🔄 Pasa el turno a:</span> Matías Muñoz</div>
+  </div>
+
+
+  <!-- SLIDE 7 — ARQUITECTURAS -->
+  <div class="slide-block">
+    <div class="slide-header">
+      <div class="slide-num">Diap. 07</div>
+      <div class="slide-title">Arquitecturas Implementadas</div>
+      <div class="speaker-tag c3">Matías Muñoz</div>
+    </div>
+    <div class="script s3">
+      Implementamos <strong>cuatro configuraciones experimentales</strong> que nos permiten aislar el efecto de la arquitectura y el de la resolución de entrada por separado.
+      <br><br>
+      La primera es <strong>MobileNetV2 como baseline CNN</strong>, operando en la resolución nativa de 28×28 con transfer learning desde ImageNet. Sus capas base quedan congeladas y solo entrenamos la cabeza clasificadora.
+      <br><br>
+      La segunda es <strong>EfficientNetB0</strong>, una CNN más sofisticada con escalado compuesto, pero que requiere imágenes de mayor resolución, por lo que reescalamos de 28 a 128 píxeles.
+      <br><br>
+      Las últimas dos son <strong>Vision Transformers personalizados</strong>, entrenados completamente desde cero —sin ningún pre-entrenamiento externo—. Uno opera en 28×28 con parches de 4×4, generando 49 tokens por imagen. El otro en 128×128 con parches de 16×16, generando 64 tokens con mayor riqueza semántica por parche. Esta comparación es clave para entender las limitaciones de los transformers en regímenes de datos pequeños.
+    </div>
+    <div class="cue"><span>⏱ Tiempo estimado:</span> 60 segundos</div>
+  </div>
+
+
+  <!-- SLIDE 8 — ENTRENAMIENTO -->
+  <div class="slide-block">
+    <div class="slide-header">
+      <div class="slide-num">Diap. 08</div>
+      <div class="slide-title">Entrenamiento &amp; Fine-Tuning</div>
+      <div class="speaker-tag c3">Matías Muñoz</div>
+    </div>
+    <div class="script s3">
+      Para el entrenamiento aplicamos <strong>data augmentation</strong> con volteos horizontal y vertical, rotación de hasta 15 grados y zoom de hasta 10%. Estas transformaciones simulan variaciones reales del transductor ecográfico sin distorsionar el contenido diagnóstico.
+      <br><br>
+      Usamos <strong>early stopping</strong> con paciencia de 4 épocas monitoreando la pérdida de validación. Esto nos protege del sobreajuste y reduce cómputo innecesario cuando el modelo deja de mejorar.
+      <br><br>
+      Para las CNN seguimos una <strong>estrategia de transfer learning en dos fases</strong>: primero entrenamos solo la cabeza clasificadora con la base congelada, y luego descongelamos las últimas capas con un learning rate reducido. Los ViT, que son más sensibles a la tasa de aprendizaje, se entrenaron con lr=0.0005 en lugar de los 0.001 usados en las CNN.
+      <br><br>
+      El batch size fue de 32 imágenes y el máximo de épocas fue 30, aunque el early stopping detuvo el entrenamiento anticipadamente en la mayoría de los casos.
+    </div>
+    <div class="cue"><span>⏱ Tiempo estimado:</span> 60 segundos &nbsp;·&nbsp; <span>🔄 Pasa el turno a:</span> Benjamín Peña</div>
+  </div>
+
+
+  <!-- SLIDE 9 — RESULTADOS TABLA -->
+  <div class="slide-block">
+    <div class="slide-header">
+      <div class="slide-num">Diap. 09</div>
+      <div class="slide-title">Tabla Comparativa de Resultados</div>
+      <div class="speaker-tag c4">Benjamín Peña</div>
+    </div>
+    <div class="script s4">
+      Los resultados son llamativos por su uniformidad. Los <strong>cuatro modelos obtienen exactamente el mismo accuracy de 0.7308 y recall de 1.0</strong>. Esto no es una coincidencia — es la firma característica de un colapso de clase: todos los modelos están prediciendo "benigno" para cada muestra, lo que les da automáticamente el 73% de la clase mayoritaria.
+      <br><br>
+      Donde sí hay diferencias reales es en el <strong>AUC-ROC</strong>. MobileNetV2 lidera con 0.7214, seguido por EfficientNetB0 con 0.6629, el ViT en 128 píxeles con 0.5512, y el ViT en 28 píxeles con 0.498 — prácticamente en el nivel del azar.
+      <br><br>
+      En cuanto a eficiencia, MobileNetV2 también gana: solo 0.27 minutos de entrenamiento versus los 0.61 del ViT en 128 píxeles. El modelo más simple resulta ser el mejor en todas las dimensiones.
+    </div>
+    <div class="cue"><span>⏱ Tiempo estimado:</span> 55 segundos</div>
+  </div>
+
+
+  <!-- SLIDE 10 — AUC BARS -->
+  <div class="slide-block">
+    <div class="slide-header">
+      <div class="slide-num">Diap. 10</div>
+      <div class="slide-title">Comparativa de AUC-ROC</div>
+      <div class="speaker-tag c4">Benjamín Peña</div>
+    </div>
+    <div class="script s4">
+      Esta visualización deja en claro la jerarquía entre los modelos. <strong>MobileNetV2, el más simple de todos, es el que mejor discrimina entre las dos clases</strong>, con un AUC de 0.72.
+      <br><br>
+      EfficientNetB0, a pesar de ser una arquitectura más sofisticada y operar en mayor resolución, obtiene un AUC inferior de 0.66. Esto confirma que el reescalado bilineal de 28 a 128 píxeles no está aportando información real — solo está suavizando artificialmente la imagen.
+      <br><br>
+      Los Vision Transformers, que son la arquitectura de vanguardia en visión por computador, no logran superar el 0.55. El ViT en 28 píxeles cae prácticamente al nivel de una clasificación aleatoria, con un AUC de 0.498.
+      <br><br>
+      Esto confirma algo bien documentado en la literatura: <strong>los transformers necesitan grandes volúmenes de datos</strong> para aprender representaciones útiles, y 546 imágenes simplemente no son suficientes.
+    </div>
+    <div class="cue"><span>⏱ Tiempo estimado:</span> 55 segundos</div>
+  </div>
+
+
+  <!-- SLIDE 11 — ANÁLISIS CRÍTICO -->
+  <div class="slide-block">
+    <div class="slide-header">
+      <div class="slide-num">Diap. 11</div>
+      <div class="slide-title">Análisis Crítico</div>
+      <div class="speaker-tag c4">Benjamín Peña</div>
+    </div>
+    <div class="script s4">
+      La matriz de confusión del mejor modelo confirma el colapso de clase que mencionamos. De los <strong>42 casos malignos en el set de prueba, el modelo no identifica ninguno</strong> — todos son clasificados como benignos. FN=42, FP=1, TN=0, TP=113.
+      <br><br>
+      El recall de 1.0 que veíamos en la tabla es completamente engañoso: refleja que el modelo acierta todos los benignos, no que detecta los malignos. En un contexto clínico real, un falso negativo en oncología puede costar una vida. Este modelo, como está, no es apto para uso clínico.
+      <br><br>
+      Tenemos tres hallazgos clave: primero, el sesgo inductivo de localidad espacial de las CNN es una ventaja decisiva en este régimen de datos pequeños. Segundo, el reescalado no reemplaza resolución real — la información no existe si no estaba en la imagen original. Y tercero, los ViT sin pre-entrenamiento masivo no son competitivos, lo que es coherente con los hallazgos de Dosovitskiy et al. en 2021.
+    </div>
+    <div class="cue"><span>⏱ Tiempo estimado:</span> 60 segundos</div>
+  </div>
+
+
+  <!-- SLIDE 12 — CONCLUSIONES -->
+  <div class="slide-block">
+    <div class="slide-header">
+      <div class="slide-num">Diap. 12</div>
+      <div class="slide-title">Conclusiones &amp; Trabajo Futuro</div>
+      <div class="speaker-tag c4">Benjamín Peña</div>
+    </div>
+    <div class="script s4">
+      Para cerrar, extraemos cuatro conclusiones principales.
+      <br><br>
+      <strong>Primera:</strong> En regímenes de datos limitados, el sesgo inductivo de las CNN —su capacidad de explotar localidad espacial sin necesitar aprenderla— es una ventaja decisiva sobre los Vision Transformers.
+      <br><br>
+      <strong>Segunda:</strong> En datasets desbalanceados, el AUC-ROC es la única métrica que captura la capacidad discriminativa real del modelo. El accuracy y el recall aislados son engañosos.
+      <br><br>
+      <strong>Tercera:</strong> Los ViT sin pre-entrenamiento masivo no son competitivos, lo que confirma los límites teóricos ya descritos en la literatura.
+      <br><br>
+      <strong>Cuarta:</strong> Interpolar resolución no reemplaza tener imágenes de mayor calidad nativa.
+      <br><br>
+      Como trabajo futuro proponemos explorar pre-entrenamiento auto-supervisado con DINO o MAE para adaptar ViT a datos médicos limitados; técnicas de balanceo como SMOTE o class weighting para reducir el colapso de clase; y trabajar con resoluciones reales de 128×128 sin interpolación artificial.
+      <br><br>
+      Muchas gracias por su atención. Quedamos disponibles para preguntas.
+    </div>
+    <div class="cue"><span>⏱ Tiempo estimado:</span> 75 segundos &nbsp;·&nbsp; <span>👥 Todos disponibles para preguntas</span></div>
+  </div>
+
+
+  <!-- Resumen de tiempos -->
+  <table style="width:100%;border-collapse:collapse;margin-top:40px;font-family:sans-serif;font-size:14px">
+    <caption style="text-align:left;font-weight:bold;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:#888;margin-bottom:10px">Resumen de tiempos estimados</caption>
+    <thead>
+      <tr style="background:#eee">
+        <th style="padding:9px 12px;text-align:left">Integrante</th>
+        <th style="padding:9px 12px;text-align:left">Diapositivas</th>
+        <th style="padding:9px 12px;text-align:right">Tiempo aprox.</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:1px solid #ddd"><td style="padding:9px 12px"><strong>Cristóbal Flores</strong></td><td style="padding:9px 12px;color:#555">01 · 02 · 03</td><td style="padding:9px 12px;text-align:right">~1 min 45 s</td></tr>
+      <tr style="border-bottom:1px solid #ddd"><td style="padding:9px 12px"><strong>Francisco Morales</strong></td><td style="padding:9px 12px;color:#555">04 · 05 · 06</td><td style="padding:9px 12px;text-align:right">~2 min 35 s</td></tr>
+      <tr style="border-bottom:1px solid #ddd"><td style="padding:9px 12px"><strong>Matías Muñoz</strong></td><td style="padding:9px 12px;color:#555">07 · 08</td><td style="padding:9px 12px;text-align:right">~2 min</td></tr>
+      <tr><td style="padding:9px 12px"><strong>Benjamín Peña</strong></td><td style="padding:9px 12px;color:#555">09 · 10 · 11 · 12</td><td style="padding:9px 12px;text-align:right">~4 min</td></tr>
+    </tbody>
+    <tfoot>
+      <tr style="background:#f5f5f5">
+        <td colspan="2" style="padding:9px 12px;font-weight:bold">Total estimado</td>
+        <td style="padding:9px 12px;text-align:right;font-weight:bold">~10 min 20 s</td>
+      </tr>
+    </tfoot>
+  </table>
+
+</div>
+</body>
+</html>

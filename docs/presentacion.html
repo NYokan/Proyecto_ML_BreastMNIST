@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BreastMNIST — Diagnóstico Asistido · UNAB 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,700;12..96,800&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:      #060D1C;
+  --bg2:     #0B1728;
+  --ink:     #EFF4FF;
+  --dim:     #8BA8CC;
+  --mute:    #3D5878;
+  --line:    #152038;
+  --line2:   #1E2E44;
+  --pulse:   #00C9FF;
+  --pulsed:  #007BB8;
+  --navy:    #003893;
+  --blue:    #1A5BBF;
+  --gold:    #FFD166;
+  --goldf:   #FFBD3E;
+  --red:     #E74C3C;
+  --green:   #27AE60;
+}
+*{box-sizing:border-box;-webkit-font-smoothing:antialiased}
+html,body{margin:0;padding:0;background:#000;color:var(--ink);
+  font-family:"Manrope",system-ui,sans-serif;overflow:hidden;height:100%}
+body{display:flex;align-items:center;justify-content:center}
+
+/* ── STAGE ── */
+.stage{
+  position:relative;width:1920px;height:1080px;
+  background:var(--bg);transform-origin:center center;
+  overflow:hidden;box-shadow:0 40px 120px rgba(0,0,0,.8);
+}
+
+/* ── SLIDES ── */
+.slide{
+  position:absolute;inset:0;display:none;
+  padding:78px 100px;background:var(--bg);color:var(--ink);
+  opacity:0;will-change:transform,opacity;
+}
+.slide.active{display:block;animation:slideIn .55s cubic-bezier(.22,.61,.36,1) forwards}
+.slide.active.back{animation:slideInBack .55s cubic-bezier(.22,.61,.36,1) forwards}
+.s-cover,.s-close{position:absolute;inset:0;display:none;overflow:hidden;opacity:0}
+.s-cover.active,.s-close.active{display:block;animation:fadeIn .7s ease-out forwards}
+
+@keyframes slideIn{0%{opacity:0;transform:translateX(60px) scale(.985);filter:blur(4px)}100%{opacity:1;transform:none;filter:blur(0)}}
+@keyframes slideInBack{0%{opacity:0;transform:translateX(-60px) scale(.985);filter:blur(4px)}100%{opacity:1;transform:none;filter:blur(0)}}
+@keyframes fadeIn{0%{opacity:0;transform:scale(1.02)}100%{opacity:1;transform:none}}
+
+/* stagger */
+.slide.active .eyebrow,.slide.active h2.title,.slide.active p.lede{animation:riseIn .7s cubic-bezier(.22,.61,.36,1) backwards}
+.slide.active .eyebrow{animation-delay:.05s}
+.slide.active h2.title{animation-delay:.15s}
+.slide.active p.lede{animation-delay:.25s}
+@keyframes riseIn{0%{opacity:0;transform:translateY(16px)}100%{opacity:1;transform:none}}
+
+/* ── TYPOGRAPHY ── */
+.eyebrow{
+  font-family:"JetBrains Mono",monospace;font-size:17px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--pulse);font-weight:500;
+  display:flex;align-items:center;gap:12px;margin-bottom:20px;
+}
+.eyebrow .edot{width:10px;height:10px;border-radius:50%;background:var(--pulse);box-shadow:0 0 16px var(--pulse);flex-shrink:0}
+h2.title{
+  font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:82px;
+  line-height:.96;letter-spacing:-.025em;margin:0 0 28px;
+  font-variation-settings:"opsz" 72;text-wrap:balance;
+}
+h2.title i{font-style:italic;color:var(--pulse);font-variation-settings:"opsz" 96}
+h2.title .gd{color:var(--goldf)}
+p.lede{font-size:27px;line-height:1.45;color:var(--dim);max-width:1100px;margin:0}
+
+/* ── DOTS (top bar) ── */
+.dots{position:absolute;top:28px;left:0;right:0;display:flex;justify-content:center;gap:8px;z-index:20}
+.dots .d{width:32px;height:3px;background:rgba(255,255,255,.1);border-radius:2px;cursor:pointer;transition:background .3s}
+.dots .d.on{background:var(--pulse)}
+.dots .d:hover{background:rgba(0,201,255,.4)}
+
+/* ── HUD ── */
+.hud{
+  position:absolute;bottom:28px;left:0;right:0;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 100px;z-index:20;pointer-events:none;
+}
+.hud .mark{font-family:"JetBrains Mono",monospace;font-size:14px;letter-spacing:.2em;text-transform:uppercase;color:var(--mute);display:flex;align-items:center;gap:10px}
+.hud .pager{font-family:"JetBrains Mono",monospace;font-size:14px;letter-spacing:.2em;color:var(--mute)}
+.hud .pager b{color:var(--ink)}
+
+/* ── NAV ── */
+.nav{position:fixed;bottom:22px;right:22px;display:flex;gap:10px;z-index:50}
+.nav button{
+  width:52px;height:52px;border-radius:50%;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);
+  color:var(--ink);cursor:pointer;font-size:22px;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .2s;backdrop-filter:blur(8px);
+}
+.nav button:hover{background:var(--pulse);border-color:var(--pulse);color:#000}
+
+/* ── PIXELS (cover / close) ── */
+.pixels{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:3}
+.px{
+  position:absolute;bottom:-10px;border-radius:50%;
+  background:radial-gradient(circle,#E0F8FF 0%,#00C9FF 55%,transparent 80%);
+  box-shadow:0 0 12px #00C9FF,0 0 24px rgba(0,201,255,.4);
+  opacity:0;animation:pixrise 13s linear infinite;
+}
+.px:nth-child(1){left:5%;width:5px;height:5px;animation-delay:0s;animation-duration:12s}
+.px:nth-child(2){left:12%;width:3px;height:3px;animation-delay:1.4s;animation-duration:10s}
+.px:nth-child(3){left:20%;width:6px;height:6px;animation-delay:2.8s;animation-duration:14s}
+.px:nth-child(4){left:28%;width:4px;height:4px;animation-delay:.7s;animation-duration:11s}
+.px:nth-child(5){left:36%;width:5px;height:5px;animation-delay:3.9s;animation-duration:13s}
+.px:nth-child(6){left:44%;width:7px;height:7px;animation-delay:1.9s;animation-duration:10.5s;background:radial-gradient(circle,#fff 0%,var(--goldf) 55%,transparent 80%);box-shadow:0 0 12px var(--goldf)}
+.px:nth-child(7){left:52%;width:4px;height:4px;animation-delay:4.6s;animation-duration:12.5s}
+.px:nth-child(8){left:60%;width:5px;height:5px;animation-delay:.9s;animation-duration:11.5s}
+.px:nth-child(9){left:68%;width:3px;height:3px;animation-delay:3.2s;animation-duration:13.5s}
+.px:nth-child(10){left:76%;width:6px;height:6px;animation-delay:5.4s;animation-duration:11s;background:radial-gradient(circle,#fff 0%,#1A5BBF 55%,transparent 80%);box-shadow:0 0 12px #1A5BBF}
+.px:nth-child(11){left:84%;width:4px;height:4px;animation-delay:6.2s;animation-duration:12s}
+.px:nth-child(12){left:92%;width:5px;height:5px;animation-delay:7.1s;animation-duration:10s}
+.px:nth-child(13){left:8%;width:4px;height:4px;animation-delay:8s;animation-duration:11.5s}
+.px:nth-child(14){left:48%;width:8px;height:8px;animation-delay:.3s;animation-duration:15s}
+.px:nth-child(15){left:72%;width:5px;height:5px;animation-delay:4.5s;animation-duration:14s}
+@keyframes pixrise{
+  0%{transform:translateY(0) translateX(0) scale(1);opacity:0}
+  10%{opacity:.9}50%{transform:translateY(-540px) translateX(18px);opacity:.6}
+  90%{opacity:.3}100%{transform:translateY(-1080px) translateX(-12px) scale(.3);opacity:0}
+}
+@keyframes pulse{50%{opacity:.3}}
+@keyframes ping{0%{transform:scale(.5);opacity:.8}100%{transform:scale(1.5);opacity:0}}
+
+/* ══════════════════════════════
+   S1 · COVER
+══════════════════════════════ */
+.s-cover .glow{
+  position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 55% 45% at 50% 115%,rgba(0,136,204,.65),transparent 60%),
+    radial-gradient(ellipse 75% 50% at 50% 135%,rgba(0,56,147,.8),transparent 60%),
+    linear-gradient(180deg,#060D1C 0%,#071525 60%,#0A1E38 100%);
+}
+.s-cover .content{position:relative;z-index:5;padding:90px 100px;display:flex;flex-direction:column;height:100%}
+.s-cover .brand-top{display:flex;align-items:center;gap:14px;font-family:"JetBrains Mono",monospace;font-size:16px;letter-spacing:.28em;color:var(--mute)}
+.s-cover .core{margin-top:auto;margin-bottom:50px}
+.s-cover .core .pre{
+  font-family:"JetBrains Mono",monospace;font-size:18px;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--goldf);margin-bottom:26px;
+  display:flex;align-items:center;gap:14px;
+}
+.s-cover .core .pre .pdot{width:10px;height:10px;border-radius:50%;background:var(--goldf);box-shadow:0 0 14px var(--goldf)}
+.s-cover .core h1{
+  font-family:"Bricolage Grotesque",sans-serif;font-weight:800;
+  font-size:210px;line-height:.84;letter-spacing:-.06em;margin:0;
+  background:linear-gradient(180deg,#EFF4FF 0%,#7EC8F0 40%,#00C9FF 75%,#003893 100%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+}
+.s-cover .core .tag{margin-top:26px;display:flex;align-items:flex-end;justify-content:space-between}
+.s-cover .core .tag .line{font-size:31px;line-height:1.25;color:var(--ink);max-width:960px;font-weight:500}
+.s-cover .core .tag .line b{color:var(--goldf);font-weight:700}
+.s-cover .core .tag .meta{font-family:"JetBrains Mono",monospace;font-size:14px;letter-spacing:.2em;color:var(--mute);text-align:right;line-height:2.2}
+
+/* ══════════════════════════════
+   SHARED COMPONENTS
+══════════════════════════════ */
+.card{background:var(--bg2);border:1px solid var(--line);border-radius:20px;padding:30px;transition:border-color .3s}
+.card:hover{border-color:rgba(0,201,255,.25)}
+.card-top::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--pulse),var(--blue));border-radius:20px 20px 0 0}
+.ct{font-family:"JetBrains Mono",monospace;font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--pulse);margin-bottom:10px}
+.cb{font-size:19px;line-height:1.6;color:var(--dim)}
+.ci{font-size:38px;margin-bottom:10px}
+
+.tbl{width:100%;border-collapse:collapse;font-size:18px}
+.tbl th{padding:13px 16px;text-align:left;background:rgba(0,201,255,.1);color:var(--pulse);font-family:"JetBrains Mono",monospace;font-size:12px;text-transform:uppercase;letter-spacing:1.5px}
+.tbl th:first-child{border-radius:8px 0 0 8px}.tbl th:last-child{border-radius:0 8px 8px 0}
+.tbl td{padding:13px 16px;border-bottom:1px solid var(--line);color:var(--dim)}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:rgba(0,201,255,.04)}
+.tbl tr.best td{background:rgba(0,201,255,.06)}
+.tbl tr.best td:first-child{border-left:3px solid var(--pulse)}
+.hl{color:var(--pulse);font-weight:700}
+.badge{display:inline-block;border-radius:8px;padding:3px 10px;font-size:12px;font-weight:600;font-family:"JetBrains Mono",monospace}
+.b-cnn{background:rgba(0,56,147,.4);color:#7eb3ff}
+.b-vit{background:rgba(255,209,102,.18);color:var(--goldf)}
+.b-best{background:rgba(0,201,255,.22);color:var(--pulse)}
+
+.alert{border-radius:16px;padding:20px 24px;margin-bottom:12px}
+.alert:last-child{margin-bottom:0}
+.aw{background:rgba(231,76,60,.08);border:1px solid rgba(231,76,60,.28)}
+.as{background:rgba(0,201,255,.06);border:1px solid rgba(0,201,255,.28)}
+.ag{background:rgba(255,209,102,.08);border:1px solid rgba(255,209,102,.28)}
+.alt-t{font-family:"JetBrains Mono",monospace;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px}
+.aw .alt-t{color:#ff7070}.as .alt-t{color:var(--pulse)}.ag .alt-t{color:var(--goldf)}
+.alb{font-size:18px;color:var(--dim);line-height:1.55}
+
+.barchart{display:flex;flex-direction:column;gap:18px}
+.brow{display:flex;align-items:center;gap:16px}
+.blbl{width:260px;font-family:"JetBrains Mono",monospace;font-size:14px;color:var(--dim);text-align:right;flex-shrink:0}
+.btrk{flex:1;height:48px;background:rgba(255,255,255,.04);border-radius:10px;overflow:hidden}
+.bfill{height:100%;border-radius:10px;display:flex;align-items:center;padding-left:16px;font-size:14px;font-weight:700;color:rgba(255,255,255,.85);width:0;transition:width 1.5s cubic-bezier(.4,0,.2,1) .35s}
+.bval{width:64px;font-size:20px;font-weight:800;color:var(--dim);flex-shrink:0;font-family:"Bricolage Grotesque"}
+
+.pipe{display:flex;align-items:center;justify-content:center}
+.pnode{background:rgba(0,56,147,.35);border:1px solid var(--blue);border-radius:16px;padding:20px 26px;text-align:center;min-width:170px}
+.pnt{font-family:"JetBrains Mono",monospace;font-size:12px;font-weight:600;color:var(--pulse);letter-spacing:.15em;text-transform:uppercase;margin-bottom:4px}
+.pnn{font-size:58px;font-weight:800;font-family:"Bricolage Grotesque";line-height:1}
+.pns{font-size:13px;color:var(--mute);font-family:"JetBrains Mono",monospace;margin-top:4px;letter-spacing:.08em}
+.parr{color:var(--line2);font-size:30px;padding:0 14px}
+
+.mrow{display:flex;gap:14px;margin-top:24px}
+.mc{flex:1;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:16px;text-align:center}
+.mn{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--mute);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:7px}
+.mv{font-size:26px;font-weight:800;font-family:"Bricolage Grotesque"}
+
+.acard{background:linear-gradient(135deg,rgba(0,56,147,.25) 0%,rgba(6,13,28,.7) 100%);border:1px solid rgba(0,201,255,.16);border-radius:18px;padding:26px}
+.an{font-size:26px;font-weight:800;font-family:"Bricolage Grotesque";margin-bottom:2px}
+.ar{font-size:13px;color:var(--goldf);font-family:"JetBrains Mono",monospace;margin-bottom:14px;letter-spacing:.04em}
+.af{font-size:17px;color:var(--dim);line-height:1.5;margin-bottom:4px;padding-left:18px;position:relative}
+.af::before{content:"▸";color:var(--pulse);position:absolute;left:0}
+
+.ci2{display:flex;gap:16px;align-items:flex-start;padding:16px 20px;background:rgba(255,255,255,.03);border-left:3px solid var(--pulse);border-radius:0 14px 14px 0;margin-bottom:12px}
+.cn2{font-size:34px;font-weight:900;color:var(--pulse);opacity:.22;line-height:1.1;flex-shrink:0;font-family:"Bricolage Grotesque"}
+.ctxt{font-size:19px;color:var(--dim);line-height:1.55}
+.ctxt strong{color:var(--ink)}
+
+.tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;font-family:"JetBrains Mono",monospace}
+.tr{background:rgba(231,76,60,.15);color:#ff8080}
+.tg{background:rgba(39,174,96,.15);color:#6fcf97}
+.tc{background:rgba(0,201,255,.15);color:var(--pulse)}
+
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:26px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+
+.bg1{background:radial-gradient(ellipse at 8% 82%,rgba(0,56,147,.22) 0%,transparent 50%),var(--bg)}
+.bg2{background:radial-gradient(ellipse at 90% 16%,rgba(255,209,102,.06) 0%,transparent 44%),var(--bg)}
+
+.agrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:44px}
+.aitem{display:flex;align-items:center;gap:16px;padding:18px 22px;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;cursor:pointer;transition:all .25s}
+.aitem:hover{background:rgba(0,201,255,.07);border-color:rgba(0,201,255,.28);transform:translateX(4px)}
+.anum{width:38px;height:38px;border-radius:50%;background:var(--navy);color:var(--pulse);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0;font-family:"JetBrains Mono",monospace}
+.albl{font-size:22px;font-weight:600;font-family:"Bricolage Grotesque"}
+
+.sep{height:1px;background:var(--line);margin:18px 0}
+
+/* ══════════════════════════════
+   S12 · CLOSE
+══════════════════════════════ */
+.s-close .glow{
+  position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 55% 45% at 50% 115%,rgba(0,136,204,.5),transparent 60%),
+    linear-gradient(180deg,#060D1C 0%,#071525 60%,#0A1E38 100%);
+}
+.s-close .content{position:relative;z-index:5;padding:90px 100px;display:flex;flex-direction:column;height:100%}
+.s-close .top-line{font-family:"JetBrains Mono",monospace;font-size:17px;letter-spacing:.28em;text-transform:uppercase;color:var(--goldf);display:flex;align-items:center;gap:14px}
+.s-close .top-line .tldot{width:10px;height:10px;border-radius:50%;background:var(--goldf);box-shadow:0 0 14px var(--goldf)}
+.s-close h1{margin:auto 0 0;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:148px;line-height:.9;letter-spacing:-.04em;max-width:1500px;text-wrap:balance}
+.s-close h1 i{font-style:italic;color:var(--pulse);font-variation-settings:"opsz" 96}
+.s-close .bottom{display:flex;justify-content:space-between;align-items:flex-end;margin-top:54px}
+.s-close .signoff{font-family:"JetBrains Mono",monospace;font-size:14px;letter-spacing:.16em;color:var(--mute);text-align:right;line-height:2}
+.s-close .signoff b{color:var(--ink);display:block;font-family:"Bricolage Grotesque";font-size:22px;font-weight:700;letter-spacing:.02em;margin-top:6px}
+.s-close .team{display:flex;flex-direction:column;gap:6px;font-family:"JetBrains Mono",monospace;font-size:14px;letter-spacing:.1em;color:var(--mute)}
+.s-close .team b{color:var(--ink);font-family:"Bricolage Grotesque";font-size:26px;font-weight:700;display:block;margin-bottom:8px}
+
+/* ─── Animated stat counter ─── */
+.stat-big{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:88px;line-height:.9;letter-spacing:-.04em;background:linear-gradient(180deg,#EFF4FF,#00C9FF 70%,#0055AA);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.stat-big .unit{font-size:40px;color:var(--mute);-webkit-text-fill-color:var(--mute)}
+.stat-lbl{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--mute);margin-top:8px}
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+<div class="dots" id="dots"></div>
+
+<!-- ══════════════════════════════
+     S1 · PORTADA
+══════════════════════════════ -->
+<section class="s-cover active" data-label="01 Portada">
+  <div class="glow"></div>
+  <div class="pixels">
+    <div class="px"></div><div class="px"></div><div class="px"></div>
+    <div class="px"></div><div class="px"></div><div class="px"></div>
+    <div class="px"></div><div class="px"></div><div class="px"></div>
+    <div class="px"></div><div class="px"></div><div class="px"></div>
+    <div class="px"></div><div class="px"></div><div class="px"></div>
+  </div>
+  <div class="content">
+    <div class="brand-top">
+      <!-- UNAB logo -->
+      <svg width="52" height="46" viewBox="0 0 240 200" xmlns="http://www.w3.org/2000/svg">
+        <defs><linearGradient id="ug" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#1a5bbf"/><stop offset="100%" style="stop-color:#001a5e"/></linearGradient></defs>
+        <path d="M120 8 L215 42 L215 118 Q215 168 120 188 Q25 168 25 118 L25 42 Z" fill="url(#ug)"/>
+        <path d="M120 8 L215 42 L215 118 Q215 168 120 188 Q25 168 25 118 L25 42 Z" fill="none" stroke="#FFD166" stroke-width="3.5"/>
+        <path d="M76 78 L76 124 Q96 116 120 120" fill="none" stroke="white" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M164 78 L164 124 Q144 116 120 120" fill="none" stroke="white" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+        <line x1="120" y1="76" x2="120" y2="120" stroke="white" stroke-width="2.8"/>
+        <path d="M76 78 Q98 70 120 74 Q142 70 164 78" fill="none" stroke="white" stroke-width="2.8" stroke-linecap="round"/>
+        <text x="120" y="158" text-anchor="middle" fill="white" font-size="28" font-weight="900" font-family="Arial,sans-serif" letter-spacing="4">UNAB</text>
+      </svg>
+      <span>UNIVERSIDAD ANDRÉS BELLO · APRENDIZAJE DE MÁQUINA · 2026</span>
+    </div>
+    <div class="core">
+      <div class="pre">
+        <span class="pdot"></span>
+        Proyecto Machine Learning · Visión Artificial
+      </div>
+      <h1>BreastMNIST</h1>
+      <div class="tag">
+        <div class="line">
+          Diagnóstico Asistido de <b>Cáncer de Mama</b> mediante Visión Artificial.<br>
+          Clasificación Binaria de Imágenes de Ultrasonido — CNN vs. Vision Transformers.
+        </div>
+        <div class="meta">
+          Cristóbal Flores<br>
+          <span style="color:var(--ink)">Francisco Morales</span><br>
+          <span style="color:var(--ink)">Matías Muñoz</span><br>
+          <span style="color:var(--ink)">Benjamín Peña</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════
+     S2 · AGENDA
+══════════════════════════════ -->
+<section class="slide bg1" data-label="02 Agenda">
+<div class="eyebrow"><span class="edot"></span>Estructura de la Presentación</div>
+<h2 class="title">Contenido</h2>
+<div class="agrid">
+  <div class="aitem" onclick="goTo(2)"><div class="anum">01</div><div class="albl">Contexto Clínico</div></div>
+  <div class="aitem" onclick="goTo(3)"><div class="anum">02</div><div class="albl">Dataset BreastMNIST</div></div>
+  <div class="aitem" onclick="goTo(4)"><div class="anum">03</div><div class="albl">Análisis Exploratorio (EDA)</div></div>
+  <div class="aitem" onclick="goTo(5)"><div class="anum">04</div><div class="albl">Diseño Experimental</div></div>
+  <div class="aitem" onclick="goTo(6)"><div class="anum">05</div><div class="albl">Arquitecturas Implementadas</div></div>
+  <div class="aitem" onclick="goTo(7)"><div class="anum">06</div><div class="albl">Entrenamiento &amp; Fine-Tuning</div></div>
+  <div class="aitem" onclick="goTo(8)"><div class="anum">07</div><div class="albl">Resultados Comparativos</div></div>
+  <div class="aitem" onclick="goTo(11)"><div class="anum">08</div><div class="albl">Conclusiones</div></div>
+</div>
+</section>
+
+
+<!-- ══════════════════════════════
+     S3 · CONTEXTO CLÍNICO
+══════════════════════════════ -->
+<section class="slide bg2" data-label="03 Contexto">
+<div class="eyebrow"><span class="edot"></span>01 · Contexto Clínico</div>
+<h2 class="title">Cáncer de Mama &amp; <i>Diagnóstico Asistido</i></h2>
+<div class="g2">
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="card" style="position:relative">
+      <div class="ci">🩺</div>
+      <div class="ct">Epidemiología Global</div>
+      <div class="cb">Primera neoplasia en mujeres a nivel mundial. Tasa de supervivencia a 5 años
+        <strong style="color:#6fcf97">+90%</strong> en estadios iniciales vs. caída dramática en etapas avanzadas.
+        <strong style="color:var(--ink)">La detección temprana es el factor pronóstico más determinante.</strong></div>
+    </div>
+    <div class="card">
+      <div class="ci">🔬</div>
+      <div class="ct">Ultrasonido Mamario</div>
+      <div class="cb">Herramienta de primera línea, especialmente valiosa en tejido denso. Susceptible a variabilidad inter-observador significativa y requiere expertise clínico especializado.</div>
+    </div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="card">
+      <div class="ci">🤖</div>
+      <div class="ct">Sistemas CAD con Deep Learning</div>
+      <div class="cb">Los sistemas de diagnóstico asistido por computador (CAD) permiten estandarizar y escalar el proceso diagnóstico, reduciendo errores humanos en la interpretación ecográfica.</div>
+    </div>
+    <div class="card" style="background:linear-gradient(135deg,rgba(0,56,147,.28),rgba(6,13,28,.8));border-color:rgba(0,201,255,.2)">
+      <div class="ci">🎯</div>
+      <div class="ct">Objetivo del Estudio</div>
+      <div class="cb">Comparar arquitecturas <strong style="color:var(--ink)">CNN clásicas</strong> vs. <strong style="color:var(--ink)">Vision Transformers</strong> en BreastMNIST, analizando el impacto de la resolución espacial de entrada <strong style="color:var(--pulse)">(28×28 vs. 128×128 px)</strong>.</div>
+    </div>
+  </div>
+</div>
+</section>
+
+
+<!-- ══════════════════════════════
+     S4 · DATASET
+══════════════════════════════ -->
+<section class="slide bg1" data-label="04 Dataset">
+<div class="eyebrow"><span class="edot"></span>02 · Dataset</div>
+<h2 class="title"><i>BreastMNIST</i> — MedMNIST v2</h2>
+<div class="g2" style="align-items:center">
+  <div>
+    <div class="card" style="margin-bottom:16px">
+      <div class="ct">Fuente &amp; Preprocesamiento</div>
+      <div class="cb">Proviene de <strong style="color:var(--ink)">MedMNIST v2</strong> (Yang et al., 2023). Imágenes de ultrasonido mamario en escala de grises, normalizadas y reescaladas a resolución estándar de <strong style="color:var(--pulse)">28×28 píxeles</strong> (resolución nativa del dataset).</div>
+    </div>
+    <div class="card">
+      <div class="ct">Distribución de Splits — Hold-Out Fijo</div>
+      <table class="tbl" style="margin-top:10px">
+        <thead>
+          <tr><th>Split</th><th>Total</th><th>Maligno (0)</th><th>Benigno (1)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Entrenamiento</td><td>546</td><td>~147 (27%)</td><td>~399 (73%)</td></tr>
+          <tr><td>Validación</td><td>78</td><td>~21 (27%)</td><td>~57 (73%)</td></tr>
+          <tr><td><strong style="color:var(--ink)">Prueba</strong></td><td><strong style="color:var(--ink)">156</strong></td><td>42 (27%)</td><td>114 (73%)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div style="display:flex;flex-direction:column;align-items:center;gap:30px">
+    <!-- Animated donut -->
+    <svg width="260" height="260" viewBox="0 0 260 260" id="donut-svg">
+      <circle cx="130" cy="130" r="96" fill="none" stroke="rgba(255,255,255,.05)" stroke-width="36"/>
+      <circle cx="130" cy="130" r="96" fill="none" stroke="var(--green)" stroke-width="36"
+        stroke-dasharray="0 603.2" stroke-dashoffset="0" transform="rotate(-90 130 130)"
+        id="donut-benign" style="transition:stroke-dasharray 1.4s cubic-bezier(.4,0,.2,1) .3s"/>
+      <circle cx="130" cy="130" r="96" fill="none" stroke="var(--red)" stroke-width="36"
+        stroke-dasharray="0 603.2" id="donut-mal" transform="rotate(-90 130 130)"
+        style="transition:stroke-dasharray 1.4s cubic-bezier(.4,0,.2,1) .6s,stroke-dashoffset 1.4s cubic-bezier(.4,0,.2,1) .6s"/>
+      <text x="130" y="122" text-anchor="middle" fill="white" font-size="44" font-weight="900" font-family="Bricolage Grotesque,sans-serif">73%</text>
+      <text x="130" y="146" text-anchor="middle" fill="rgba(255,255,255,.5)" font-size="16" font-family="JetBrains Mono,monospace">Benigno</text>
+    </svg>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;align-items:center;gap:12px;font-size:20px">
+        <div style="width:16px;height:16px;border-radius:4px;background:var(--green);flex-shrink:0"></div>
+        Benigno / Normal — <strong style="color:var(--ink)">73%</strong>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;font-size:20px">
+        <div style="width:16px;height:16px;border-radius:4px;background:var(--red);flex-shrink:0"></div>
+        Maligno — <strong style="color:var(--ink)">27%</strong>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+
+<!-- ══════════════════════════════
+     S5 · EDA
+══════════════════════════════ -->
+<section class="slide bg2" data-label="05 EDA">
+<div class="eyebrow"><span class="edot"></span>03 · Análisis Exploratorio de Datos</div>
+<h2 class="title">EDA — <i>Hallazgos Clave</i></h2>
+<div class="g2" style="align-items:start">
+  <div style="display:flex;flex-direction:column;gap:14px">
+    <div class="card">
+      <div class="ct">Modalidad de Imagen</div>
+      <div class="cb">Ultrasonido en escala de grises. Las imágenes presentan <strong style="color:var(--ink)">ruido de speckle</strong>, bajo contraste inter-tejido y artefactos de shadowing acústico — desafíos propios de la modalidad ecográfica.</div>
+    </div>
+    <div class="card">
+      <div class="ct">Resolución Extremadamente Baja</div>
+      <div class="cb">Resolución nativa <strong style="color:var(--pulse)">28×28 px</strong>. Las capas de extracción de características operan con información espacial mínima. Expandir artificialmente no agrega información diagnóstica real.</div>
+    </div>
+    <div class="card">
+      <div class="ct">Desbalance de Clases</div>
+      <div class="cb">Ratio 73%/27% refleja la prevalencia clínica real. <span class="tag tr">⚠ Riesgo</span> de colapso del modelo hacia la clase mayoritaria — el accuracy se convierte en métrica engañosa.</div>
+    </div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:14px">
+    <div class="card">
+      <div class="ct">Volumen de Entrenamiento</div>
+      <div class="cb">Solo <strong style="color:var(--pulse)">546 imágenes</strong> de entrenamiento. Régimen de datos limitado que restringe severamente la capacidad de modelos sin pre-entrenamiento masivo (p.ej. ViT).</div>
+    </div>
+    <div class="card">
+      <div class="ct">Implicancias para la Evaluación</div>
+      <div class="cb">El desbalance convierte al <strong style="color:var(--ink)">AUC-ROC</strong> en la métrica de primer orden (Yang et al., 2023). La accuracy colapsa a 73.08% para modelos que predicen siempre "benigno".</div>
+    </div>
+    <div class="card">
+      <div class="ct">Canal de Entrada</div>
+      <div class="cb">Imágenes en escala de grises replicadas a <strong style="color:var(--ink)">3 canales RGB</strong> para compatibilidad con arquitecturas pre-entrenadas en ImageNet (que esperan entrada de 3 canales).</div>
+    </div>
+  </div>
+</div>
+</section>
+
+
+<!-- ══════════════════════════════
+     S6 · DISEÑO EXPERIMENTAL
+══════════════════════════════ -->
+<section class="slide bg1" data-label="06 Diseño">
+<div class="eyebrow"><span class="edot"></span>04 · Metodología</div>
+<h2 class="title">Diseño <i>Experimental</i></h2>
+
+<div class="pipe" style="margin-bottom:36px">
+  <div class="pnode">
+    <div class="pnt">Dataset Total</div>
+    <div class="pnn">780</div>
+    <div class="pns">imágenes</div>
+  </div>
+  <div class="parr">→</div>
+  <div class="pnode" style="border-color:var(--pulse)">
+    <div class="pnt">Entrenamiento</div>
+    <div class="pnn" style="color:var(--pulse)">546</div>
+    <div class="pns">70% · fine-tuning</div>
+  </div>
+  <div class="parr">+</div>
+  <div class="pnode" style="border-color:var(--goldf)">
+    <div class="pnt">Validación</div>
+    <div class="pnn" style="color:var(--goldf)">78</div>
+    <div class="pns">10% · early stop</div>
+  </div>
+  <div class="parr">+</div>
+  <div class="pnode" style="border-color:#27ae60">
+    <div class="pnt">Prueba</div>
+    <div class="pnn" style="color:#6fcf97">156</div>
+    <div class="pns">20% · evaluación final</div>
+  </div>
+</div>
+
+<div class="eyebrow" style="margin-bottom:14px"><span class="edot"></span>Métricas de Evaluación</div>
+<div class="mrow">
+  <div class="mc" style="border-color:rgba(0,201,255,.3)">
+    <div class="mn">AUC-ROC</div>
+    <div class="mv" style="color:var(--pulse)">Principal</div>
+  </div>
+  <div class="mc">
+    <div class="mn">Accuracy</div>
+    <div class="mv" style="color:var(--mute)">Referencial</div>
+  </div>
+  <div class="mc">
+    <div class="mn">Recall</div>
+    <div class="mv" style="color:#ff8080">Sensibilidad</div>
+  </div>
+  <div class="mc">
+    <div class="mn">Tiempo (min)</div>
+    <div class="mv" style="color:var(--goldf)">Eficiencia</div>
+  </div>
+</div>
+
+<p class="lede" style="margin-top:22px;font-size:20px">División hold-out fija provista por MedMNIST — garantiza reproducibilidad y comparabilidad directa con la literatura existente.</p>
+</section>
+
+
+<!-- ══════════════════════════════
+     S7 · ARQUITECTURAS
+══════════════════════════════ -->
+<section class="slide bg2" data-label="07 Arquitecturas">
+<div class="eyebrow"><span class="edot"></span>05 · Modelos Implementados</div>
+<h2 class="title"><i>Cuatro</i> Configuraciones Experimentales</h2>
+<div class="g2">
+  <div class="acard">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+      <div><div class="an">MobileNetV2</div><div class="ar">CNN Baseline · 28×28 px · Transfer Learning</div></div>
+      <span class="badge b-best">BASELINE</span>
+    </div>
+    <div class="af">Convolución separable en profundidad (depthwise separable)</div>
+    <div class="af">Pre-entrenado en ImageNet-1k (1.28 M imágenes)</div>
+    <div class="af">Capas base congeladas + cabeza binaria con activación sigmoid</div>
+    <div class="af">Opera en resolución nativa 28×28 sin interpolación artificial</div>
+    <div class="af">Eficiente en dispositivos y entornos de recursos limitados</div>
+  </div>
+  <div class="acard">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+      <div><div class="an">EfficientNetB0</div><div class="ar">CNN Avanzado · 128×128 px · Compound Scaling</div></div>
+      <span class="badge b-cnn">CNN</span>
+    </div>
+    <div class="af">Escalado compuesto: profundidad, ancho y resolución balanceados</div>
+    <div class="af">Pre-entrenado en ImageNet con arquitectura optimizada por NAS</div>
+    <div class="af">Imágenes reescaladas bilinealmente 28 → 128 px</div>
+    <div class="af">Dropout 0.3 + GlobalAveragePooling2D para regularización</div>
+    <div class="af">Diseñado para resoluciones superiores a las nativas de BreastMNIST</div>
+  </div>
+  <div class="acard">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+      <div><div class="an">ViT Personalizado</div><div class="ar">Vision Transformer · 28×28 px · Desde Cero</div></div>
+      <span class="badge b-vit">ViT</span>
+    </div>
+    <div class="af">Parches 4×4 → 49 tokens por imagen de entrada</div>
+    <div class="af">PatchExtract + PatchEmbedding con cálculo manual de dimensiones</div>
+    <div class="af">4 bloques Transformer: MHA 4 cabezas + LayerNorm + residuales</div>
+    <div class="af">Projection dim=64 · MLP head [128, 64] · lr=0.0005</div>
+    <div class="af">Entrenado desde cero sin pre-entrenamiento externo</div>
+  </div>
+  <div class="acard">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+      <div><div class="an">ViT Personalizado</div><div class="ar">Vision Transformer · 128×128 px · Desde Cero</div></div>
+      <span class="badge b-vit">ViT</span>
+    </div>
+    <div class="af">Parches 16×16 → 64 tokens por imagen de entrada</div>
+    <div class="af">6 bloques Transformer: MHA 4 cabezas + LayerNorm + residuales</div>
+    <div class="af">Projection dim=128 · MLP head [256, 128] · lr=0.0005</div>
+    <div class="af">Mayor riqueza semántica por parche vs. versión 28×28</div>
+    <div class="af">Aún insuficiente con solo 546 muestras de entrenamiento</div>
+  </div>
+</div>
+</section>
+
+
+<!-- ══════════════════════════════
+     S8 · ENTRENAMIENTO
+══════════════════════════════ -->
+<section class="slide bg1" data-label="08 Entrenamiento">
+<div class="eyebrow"><span class="edot"></span>06 · Pipeline de Entrenamiento</div>
+<h2 class="title">Fine-Tuning &amp; <i>Regularización</i></h2>
+<div class="g2">
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="card">
+      <div class="ct">Data Augmentation</div>
+      <div class="cb" style="display:flex;flex-direction:column;gap:10px">
+        <div>↔ <strong style="color:var(--ink)">Volteo horizontal / vertical</strong> — variabilidad sin distorsión semántica</div>
+        <div>↻ <strong style="color:var(--ink)">Rotación ±15°</strong> — simula variaciones del transductor ecográfico</div>
+        <div>⊕ <strong style="color:var(--ink)">Zoom ±10%</strong> — modela variación de profundidad de escaneo</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">Early Stopping</div>
+      <div class="cb">Monitor de <code style="background:rgba(0,201,255,.12);padding:1px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:16px;color:var(--pulse)">val_loss</code> con paciencia <strong style="color:var(--ink)">4 épocas</strong> y restauración de mejores pesos. Previene sobreajuste y reduce cómputo innecesario.</div>
+    </div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="card">
+      <div class="ct">Configuración de Entrenamiento</div>
+      <div class="cb" style="display:flex;flex-direction:column;gap:8px">
+        <div>CNN → <strong style="color:var(--ink)">Adam lr=0.001</strong> &nbsp;|&nbsp; ViT → <strong style="color:var(--ink)">Adam lr=0.0005</strong></div>
+        <div>Loss: <strong style="color:var(--ink)">Binary Crossentropy</strong></div>
+        <div>Batch size: <strong style="color:var(--ink)">32</strong> &nbsp;|&nbsp; Épocas máx: <strong style="color:var(--ink)">30</strong></div>
+        <div>Métricas monitoreadas: Accuracy · AUC · Recall</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">Estrategia Transfer Learning (CNN)</div>
+      <div class="cb" style="display:flex;flex-direction:column;gap:8px">
+        <div><strong style="color:var(--pulse)">Fase 1:</strong> Base congelada → entrenar solo cabeza clasificadora</div>
+        <div><strong style="color:var(--goldf)">Fase 2 (fine-tuning):</strong> Descongelar últimas capas con lr reducido</div>
+        <div>Canal input: escala de grises replicada ×3 para compatibilidad ImageNet</div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+
+<!-- ══════════════════════════════
+     S9 · RESULTADOS TABLA
+══════════════════════════════ -->
+<section class="slide bg2" data-label="09 Resultados">
+<div class="eyebrow"><span class="edot"></span>07 · Resultados</div>
+<h2 class="title">Tabla <i>Comparativa Final</i></h2>
+<table class="tbl" style="margin-bottom:20px">
+  <thead>
+    <tr>
+      <th>Modelo / Resolución</th>
+      <th>Tipo</th>
+      <th>Accuracy</th>
+      <th>AUC-ROC</th>
+      <th>Recall</th>
+      <th>Tiempo (min)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr class="best">
+      <td><strong style="color:var(--ink)">MobileNetV2</strong> — 28×28 &nbsp;<span class="badge b-best">★ Mejor AUC</span></td>
+      <td><span class="badge b-cnn">CNN</span></td>
+      <td>0.7308</td>
+      <td class="hl">0.7214</td>
+      <td>1.000</td>
+      <td>0.27</td>
+    </tr>
+    <tr>
+      <td><strong style="color:var(--ink)">EfficientNetB0</strong> — 128×128</td>
+      <td><span class="badge b-cnn">CNN</span></td>
+      <td>0.7308</td>
+      <td>0.6629</td>
+      <td>1.000</td>
+      <td>0.39</td>
+    </tr>
+    <tr>
+      <td><strong style="color:var(--ink)">ViT Personalizado</strong> — 128×128</td>
+      <td><span class="badge b-vit">ViT</span></td>
+      <td>0.7308</td>
+      <td>0.5512</td>
+      <td>1.000</td>
+      <td>0.61</td>
+    </tr>
+    <tr>
+      <td><strong style="color:var(--ink)">ViT Personalizado</strong> — 28×28</td>
+      <td><span class="badge b-vit">ViT</span></td>
+      <td>0.7308</td>
+      <td>0.4980</td>
+      <td>1.000</td>
+      <td>0.25</td>
+    </tr>
+  </tbody>
+</table>
+<div class="alert aw">
+  <div class="alt-t">⚠ Señal de Colapso de Clase</div>
+  <div class="alb">Accuracy = 0.7308 y Recall = 1.000 <strong>idénticos en todos los modelos</strong> — firma inequívoca del colapso hacia la clase mayoritaria. Los modelos predicen "benigno" para todas las muestras, alcanzando exactamente la proporción de la clase dominante en el test set.</div>
+</div>
+</section>
+
+
+<!-- ══════════════════════════════
+     S10 · RESULTADOS AUC
+══════════════════════════════ -->
+<section class="slide bg1" data-label="10 AUC-ROC">
+<div class="eyebrow"><span class="edot"></span>07 · Visualización de Resultados</div>
+<h2 class="title">Comparativa de <i>AUC-ROC</i></h2>
+
+<div class="barchart" id="abars" style="margin-bottom:28px">
+  <div class="brow">
+    <div class="blbl">MobileNetV2 · 28×28</div>
+    <div class="btrk"><div class="bfill" style="background:linear-gradient(90deg,#003893,#00c9ff)" data-w="72.14">0.7214</div></div>
+    <div class="bval hl">0.7214</div>
+  </div>
+  <div class="brow">
+    <div class="blbl">EfficientNetB0 · 128×128</div>
+    <div class="btrk"><div class="bfill" style="background:linear-gradient(90deg,#003893,#7eb3ff)" data-w="66.29">0.6629</div></div>
+    <div class="bval">0.6629</div>
+  </div>
+  <div class="brow">
+    <div class="blbl">ViT Personalizado · 128×128</div>
+    <div class="btrk"><div class="bfill" style="background:linear-gradient(90deg,#4a3000,#ffd166)" data-w="55.12">0.5512</div></div>
+    <div class="bval" style="color:var(--goldf)">0.5512</div>
+  </div>
+  <div class="brow">
+    <div class="blbl">ViT Personalizado · 28×28</div>
+    <div class="btrk"><div class="bfill" style="background:linear-gradient(90deg,#4a1010,#e74c3c)" data-w="49.80">0.4980</div></div>
+    <div class="bval" style="color:#ff8080">0.4980</div>
+  </div>
+</div>
+
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+  <div style="flex:1;height:1px;background:rgba(231,76,60,.35)"></div>
+  <span style="font-size:15px;color:#ff8080;flex-shrink:0;font-family:'JetBrains Mono',monospace;letter-spacing:.1em">AUC = 0.5 → clasificación aleatoria</span>
+  <div style="flex:1;height:1px;background:rgba(231,76,60,.35)"></div>
+</div>
+
+<div style="display:flex;gap:16px">
+  <div class="alert as" style="flex:1;margin-bottom:0">
+    <div class="alt-t">MobileNetV2 — Mejor AUC: 0.7214</div>
+    <div class="alb">El sesgo inductivo de localidad espacial de las CNN supera a los Transformers en régimen de datos limitado (546 muestras de entrenamiento). El pre-entrenamiento en ImageNet es clave.</div>
+  </div>
+  <div class="alert aw" style="flex:1;margin-bottom:0">
+    <div class="alt-t">ViT 28×28 — AUC: 0.498 ≈ Azar</div>
+    <div class="alb">AUC cercano a 0.5 indica clasificación casi aleatoria. Sin pre-entrenamiento masivo, los ViT no pueden extraer representaciones útiles con solo 546 ejemplos.</div>
+  </div>
+</div>
+</section>
+
+
+<!-- ══════════════════════════════
+     S11 · ANÁLISIS CRÍTICO
+══════════════════════════════ -->
+<section class="slide bg2" data-label="11 Análisis">
+<div class="eyebrow"><span class="edot"></span>08 · Análisis Crítico</div>
+<h2 class="title">Hallazgos <i>Clave</i></h2>
+<div class="g2" style="align-items:start">
+  <div style="display:flex;flex-direction:column;gap:13px">
+    <div class="alert aw">
+      <div class="alt-t">Colapso de Clase Confirmado</div>
+      <div class="alb">La matriz de confusión evidencia: el modelo predice <strong>0 casos como maligno</strong>. Los 42 malignos del test set son clasificados como benignos (FN=42, FP=1). Recall=1.0 refleja acierto total en benignos, <em>no</em> sensibilidad clínica real.</div>
+    </div>
+    <div class="alert ag">
+      <div class="alt-t">Interpolación No Agrega Información</div>
+      <div class="alb">EfficientNetB0 con 128×128 obtiene <strong>AUC inferior</strong> al MobileNetV2 en 28×28. El reescalado bilineal introduce suavizado artificial que perjudica la discriminación de patrones diagnósticos finos.</div>
+    </div>
+    <div class="alert as">
+      <div class="alt-t">Sesgo Inductivo: CNN Supera a ViT</div>
+      <div class="alb">Las CNN imponen localidad espacial implícitamente — ventaja decisiva con baja resolución y pocos datos. Los ViT deben aprender estas estructuras desde cero con 546 muestras: insuficiente para superar el baseline.</div>
+    </div>
+  </div>
+  <div style="text-align:center;display:flex;flex-direction:column;align-items:center;gap:16px">
+    <img src="confusion_matrix.png" alt="Matriz de Confusión MobileNetV2"
+      style="width:100%;max-width:460px;border-radius:16px;border:1px solid var(--line);box-shadow:0 20px 60px rgba(0,0,0,.5)">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--mute);letter-spacing:.1em;text-align:center;line-height:1.8">
+      Mejor modelo: MobileNetV2 Baseline 28×28<br>
+      <span style="color:var(--dim)">FN=42 · FP=1 · TN=0 · TP=113</span>
+    </div>
+    <!-- Live LED indicator -->
+    <div style="display:inline-flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:13px;color:#6fcf97;letter-spacing:.15em">
+      <span style="width:8px;height:8px;border-radius:50%;background:#6fcf97;box-shadow:0 0 10px #6fcf97;animation:pulse 1.6s infinite;display:block"></span>
+      MEJOR MODELO · AUC 0.7214
+    </div>
+  </div>
+</div>
+</section>
+
+
+<!-- ══════════════════════════════
+     S12 · CONCLUSIONES (close)
+══════════════════════════════ -->
+<section class="s-close" data-label="12 Conclusiones">
+  <div class="glow"></div>
+  <div class="pixels">
+    <div class="px"></div><div class="px"></div><div class="px"></div>
+    <div class="px"></div><div class="px"></div><div class="px"></div>
+    <div class="px"></div><div class="px"></div><div class="px"></div>
+    <div class="px"></div><div class="px"></div><div class="px"></div>
+    <div class="px"></div><div class="px"></div><div class="px"></div>
+  </div>
+  <div class="content">
+    <div class="top-line"><span class="tldot"></span>UNAB · APRENDIZAJE DE MÁQUINA · JUNIO 2026</div>
+
+    <!-- 4 conclusions in a 2x2 grid -->
+    <div style="margin-top:44px;display:grid;grid-template-columns:1fr 1fr;gap:16px;flex:1">
+      <div class="ci2" style="margin-bottom:0;background:rgba(0,201,255,.05);border-left-color:var(--pulse)">
+        <div class="cn2">01</div>
+        <div class="ctxt"><strong>CNN supera a ViT en régimen limitado.</strong> El sesgo inductivo de localidad espacial de las convoluciones es una ventaja decisiva con 546 muestras y resolución 28×28 px.</div>
+      </div>
+      <div class="ci2" style="margin-bottom:0;background:rgba(255,209,102,.05);border-left-color:var(--goldf)">
+        <div class="cn2" style="color:var(--goldf)">02</div>
+        <div class="ctxt"><strong>AUC-ROC es la métrica indispensable.</strong> En datasets desbalanceados, accuracy y recall aislados son métricas engañosas. Solo el AUC captura la capacidad discriminativa real.</div>
+      </div>
+      <div class="ci2" style="margin-bottom:0;background:rgba(231,76,60,.05);border-left-color:#E74C3C">
+        <div class="cn2" style="color:#ff8080">03</div>
+        <div class="ctxt"><strong>ViT sin pre-entrenamiento no es competitivo.</strong> Confirma el límite teórico de Dosovitskiy et al. (2021): los Transformers requieren datasets masivos para superar a las CNN.</div>
+      </div>
+      <div class="ci2" style="margin-bottom:0;background:rgba(39,174,96,.05);border-left-color:#27AE60">
+        <div class="cn2" style="color:#6fcf97">04</div>
+        <div class="ctxt"><strong>La interpolación no reemplaza resolución real.</strong> Reescalar de 28→128 px perjudica el rendimiento al introducir suavizado en los patrones diagnósticos naturales.</div>
+      </div>
+    </div>
+
+    <h1 style="margin-top:36px;font-size:100px">
+      CNN supera a ViT<br><i>en datos limitados.</i>
+    </h1>
+
+    <div class="bottom">
+      <div class="team">
+        <b>Equipo de Investigación</b>
+        Cristóbal Flores Villegas<br>
+        Francisco Morales Díaz<br>
+        Matías Muñoz Parraguirre<br>
+        Benjamín Peña Díaz
+      </div>
+      <div class="signoff">
+        TRABAJO FUTURO<br>
+        <b>Pre-entrenamiento auto-supervisado (DINO/MAE) · Balanceo de clases · Resolución real 128×128</b>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════
+     HUD
+══════════════════════════════ -->
+<div class="hud">
+  <div class="mark">
+    <!-- small UNAB mark -->
+    <svg width="22" height="20" viewBox="0 0 240 200" xmlns="http://www.w3.org/2000/svg">
+      <path d="M120 8 L215 42 L215 118 Q215 168 120 188 Q25 168 25 118 L25 42 Z" fill="rgba(26,91,191,.5)"/>
+      <path d="M120 8 L215 42 L215 118 Q215 168 120 188 Q25 168 25 118 L25 42 Z" fill="none" stroke="#FFD166" stroke-width="8"/>
+      <path d="M76 78 L76 124 Q96 116 120 120" fill="none" stroke="white" stroke-width="8" stroke-linecap="round"/>
+      <path d="M164 78 L164 124 Q144 116 120 120" fill="none" stroke="white" stroke-width="8" stroke-linecap="round"/>
+    </svg>
+    BREASTMNIST · UNAB 2026
+  </div>
+  <div class="pager"><b id="cur">01</b> / <span id="tot">12</span></div>
+</div>
+
+</div><!-- /stage -->
+
+<div class="nav">
+  <button onclick="go(-1)" aria-label="Anterior">‹</button>
+  <button onclick="go(1)" aria-label="Siguiente">›</button>
+</div>
+
+<script>
+const slides = document.querySelectorAll('.s-cover, .slide, .s-close');
+const total  = slides.length;
+const dotsEl = document.getElementById('dots');
+let i = 0;
+
+/* build dots */
+for(let k=0;k<total;k++){
+  const d = document.createElement('div');
+  d.className = 'd'+(k===0?' on':'');
+  d.addEventListener('click',()=>goTo(k));
+  dotsEl.appendChild(d);
+}
+document.getElementById('tot').textContent = String(total).padStart(2,'0');
+
+/* animate bars when slide 9 (index 9 = S10 AUC) is shown */
+function animBars(slide){
+  slide.querySelectorAll('.bfill').forEach(b=>{
+    const w = parseFloat(b.dataset.w);
+    b.style.width = '0';
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{ b.style.width = w+'%'; }));
+  });
+}
+
+/* animate donut when slide 3 (index 3 = S4 Dataset) is shown */
+function animDonut(){
+  const C = 2*Math.PI*96; // ≈603.2
+  const benign = document.getElementById('donut-benign');
+  const mal    = document.getElementById('donut-mal');
+  if(!benign || !mal) return;
+  const benignLen = C * 0.73;
+  const malLen    = C * 0.27;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    benign.style.strokeDasharray = benignLen+' '+C;
+    mal.style.strokeDasharray    = malLen+' '+C;
+    mal.style.strokeDashoffset   = -benignLen;
+  }));
+}
+
+let prev = 0;
+function render(direction){
+  slides.forEach((s,k)=>{
+    s.classList.remove('active','back');
+    if(k===i){
+      s.classList.add('active');
+      if(direction==='back') s.classList.add('back');
+      void s.offsetWidth; /* force reflow */
+      animBars(s);
+      if(k===3) animDonut();
+    }
+  });
+  dotsEl.querySelectorAll('.d').forEach((d,k)=>d.classList.toggle('on',k===i));
+  document.getElementById('cur').textContent = String(i+1).padStart(2,'0');
+  location.hash = 's'+(i+1);
+  prev = i;
+}
+
+function goTo(n){
+  const next = Math.max(0,Math.min(total-1,n));
+  const dir  = next < i ? 'back' : 'forward';
+  i = next;
+  render(dir);
+}
+function go(d){ goTo(i+d); }
+window.goTo = goTo;
+
+/* init */
+animDonut();
+render('forward');
+
+/* keyboard */
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){e.preventDefault();go(1)}
+  if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(-1)}
+  if(e.key==='Home'){e.preventDefault();goTo(0)}
+  if(e.key==='End'){e.preventDefault();goTo(total-1)}
+  const n=parseInt(e.key);
+  if(!isNaN(n)&&n>=1&&n<=9) goTo(n-1);
+});
+
+/* click stage halves to navigate */
+document.getElementById('stage').addEventListener('click',e=>{
+  if(e.target.closest('button,a,.nav,.dots,.aitem')) return;
+  const rect = e.currentTarget.getBoundingClientRect();
+  const x    = (e.clientX-rect.left)/rect.width;
+  if(x>0.5) go(1); else go(-1);
+});
+
+/* restore from hash */
+if(location.hash){const n=parseInt(location.hash.replace(/\D/g,''),10);if(!isNaN(n)) goTo(n-1);}
+
+/* scale canvas to viewport */
+function fit(){
+  const stage = document.getElementById('stage');
+  const s = Math.min(window.innerWidth/1920, window.innerHeight/1080);
+  stage.style.transform = `scale(${s})`;
+}
+window.addEventListener('resize',fit);
+fit();
+</script>
+</body>
+</html>
